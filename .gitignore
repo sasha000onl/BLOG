@@ -1,5 +1,5 @@
 .venv/
-.venv
+.env
 venv/
 .idea/
 .vscode/
