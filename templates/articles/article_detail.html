@@ -1,0 +1,30 @@
+{% extends 'base/_base.html' %}
+
+{% block content %}
+<h2>{{ article.title }}</h2>
+<p>{{ article.content|linebreaks }}</p>
+<p>Автор: {{ article.author.username }} | {{ article.created_at|date:"d.m.Y H:i" }}</p>
+
+<hr>
+<h3>Коментарі:</h3>
+{% for comment in comments %}
+  <div style="margin-bottom:10px; color:#555; padding:8px; background:#f8f9fa; border-radius:5px;">
+    <strong>{{ comment.author.username }}</strong> — {{ comment.created_at|date:"d.m.Y H:i" }}<br>
+    {{ comment.content }}
+  </div>
+{% empty %}
+  <p>Поки що немає коментарів. 📝 Будьте першим!</p>
+{% endfor %}
+
+<hr>
+{% if user.is_authenticated %}
+<h3>Додати коментар:</h3>
+<form method="post">
+  {% csrf_token %}
+  {{ comment_form.as_p }}
+  <button type="submit" style="padding:8px 14px; background:#4CAF50; color:white; border:none; border-radius:5px;">📨 Надіслати</button>
+</form>
+{% else %}
+<p>Увійдіть, щоб залишити коментар.</p>
+{% endif %}
+{% endblock %}

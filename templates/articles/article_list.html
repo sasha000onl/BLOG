@@ -1,0 +1,16 @@
+{% extends "base/_base.html" %}
+{% block content %}
+  <h1>Статті</h1>
+  <a href="{% url 'articles:article_create' %}">➕ Нова стаття</a>
+  <ul>
+    {% for article in articles %}
+      <li>
+        <a href="{% url 'articles:article_detail' slug=article.slug %}">
+          {{ article.title }}
+        </a> — {{ article.author }} ({{ article.created_at|date:"d.m.Y" }})
+      </li>
+    {% empty %}
+      <p>Поки що немає статей.</p>
+    {% endfor %}
+  </ul>
+{% endblock %}
