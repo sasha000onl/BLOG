@@ -4,17 +4,21 @@ from django.urls import reverse_lazy
 from django.db import models
 from django.views.generic.edit import FormMixin
 from django.shortcuts import redirect
-from .models import Article, Comment
-from .forms import CommentForm, ArticleForm
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.urls import reverse_lazy
+from django.core.mail import send_mail
+from .models import Article, Category, Tag, Rating, Subscription, Comment
+from .forms import ArticleForm, RatingForm, CategoryForm, TagForm, CommentForm
 
 class ArticleDetailView(FormMixin, DetailView):
     model = Article
     template_name = 'articles/article_detail.html'
     context_object_name = 'article'
     form_class = CommentForm
+
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -29,11 +33,9 @@ class ArticleDetailView(FormMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['comment_form'] = self.get_form()   # обов’язково!
-        context['comments'] = self.object.comments.order_by('created_at')
+        context['comment_form'] = self.get_form()  # обов'язково
+        context['comments'] = self.object.comments.order_by('-created_at')  # всі коментарі
         return context
-
-
 
 class ArticleListView(ListView):
     model = Article
@@ -150,3 +152,46 @@ def comment_delete(request, pk):
     comment.delete()
     messages.success(request, "Коментар видалено 🗑️")
     return redirect("articles:article_detail", slug=article_slug)
+
+class ArticleDetailView(DetailView):
+    model = Article
+    template_name = 'articles/article_detail.html'
+    context_object_name = 'article'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        article = self.object
+        context['comments'] = article.comments.all()
+        context['comment_form'] = self.request.POST or None
+        context['rating_form'] = RatingForm()
+        context['average_rating'] = article.average_rating()
+        return context
+
+@login_required
+def rate_article(request, slug):
+    article = get_object_or_404(Article, slug=slug)
+    if request.method == 'POST':
+        form = RatingForm(request.POST)
+        if form.is_valid():
+            Rating.objects.update_or_create(
+                article=article,
+                user=request.user,
+                defaults={'value': form.cleaned_data['value']}
+            )
+    return redirect('articles:article_detail', slug=slug)
+
+
+@login_required
+def subscribe(request):
+    Subscription.objects.get_or_create(user=request.user)
+    return redirect('articles:article_list')
+
+
+def notify_subscribers(article):
+    for sub in Subscription.objects.all():
+        send_mail(
+            subject=f'📰 Нова стаття: {article.title}',
+            message=f'Переглянь нову статтю: {article.title}\n\n{article.content[:200]}...',
+            from_email='no-reply@blog.com',
+            recipient_list=[sub.user.email],
+        )

@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import CommentDeleteView
+from . import views
 from .views import (
     ArticleListView,
     ArticleCreateView,
@@ -22,4 +23,7 @@ urlpatterns = [
     path('comment/<int:pk>/delete/', CommentDeleteView.as_view(), name='comment_delete'),
     path("comment/<int:pk>/edit/", comment_edit, name="comment_edit"),
     path("comment/<int:pk>/delete/", comment_delete, name="comment_delete"),
+
+    path('<slug:slug>/rate/', views.rate_article, name='rate_article'),
+    path('subscribe/', views.subscribe, name='subscribe'),
 ]

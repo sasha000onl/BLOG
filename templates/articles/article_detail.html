@@ -1,7 +1,7 @@
 {% extends 'base/_base.html' %}
 
 {% block content %}
-<div class="article-detail">
+<div class="container my-4">
 
   <h2 class="text-orange">{{ article.title }}</h2>
 
@@ -34,8 +34,30 @@
 
   <hr>
 
-  <h3>Коментарі:</h3>
+  <p class="text-secondary">
+    Категорія: {{ article.category.name }} |
+    Теги:
+    {% for tag in article.tags.all %}
+      <span style="background:#444; color:#ff6a00; padding:2px 8px; border-radius:5px;">{{ tag.name }}</span>
+    {% endfor %}
+  </p>
 
+  <hr>
+
+  <h3>⭐ Оцінка: {{ average_rating }}/5</h3>
+  {% if user.is_authenticated %}
+    <form method="post" action="{% url 'articles:rate_article' slug=article.slug %}">
+      {% csrf_token %}
+      {{ rating_form.value }}
+      <button type="submit" class="btn btn-primary btn-sm mt-2">Поставити оцінку</button>
+    </form>
+  {% else %}
+    <p>🔒 Увійдіть, щоб оцінювати статті.</p>
+  {% endif %}
+
+  <hr>
+
+  <h3>Коментарі:</h3>
   {% if comments %}
     {% for comment in comments %}
       <div class="comment my-3 p-3 rounded" style="background:#2b2b2b;">
@@ -72,13 +94,11 @@
     <form method="post">
       {% csrf_token %}
       {{ comment_form.as_p }}
-      <button type="submit"
-              style="padding:8px 14px; background:#4CAF50; color:white; border:none; border-radius:5px;">
-        📨 Надіслати
-      </button>
+      <button type="submit" class="btn btn-success">Надіслати</button>
     </form>
   {% else %}
     <p>🔒 <a href="{% url 'accounts:login' %}" style="color:#ff6a00;">Увійдіть</a>, щоб залишити коментар.</p>
   {% endif %}
+
 </div>
 {% endblock %}
