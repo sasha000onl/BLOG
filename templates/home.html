@@ -1,131 +1,39 @@
 {% extends 'base/_base.html' %}
 
-{% block title %}Головна сторінка{% endblock %}
-
+{% block title %}Головна | BLOG++{% endblock %}
 
 {% block content %}
-<div class="text-center mb-4 text-white">
-  <h1 class="mb-3 text-white">Вітаємо на BLOG++!</h1>
-  <p class="lead text-white">Обирай потрібний розділ та починай працювати:</p>
+<div class="text-center mb-5 text-white">
+  <h1 class="mb-3 text-orange fw-bold">Вітаємо на BLOG++!</h1>
+  <p class="lead text-white-50">Обирайте розділ, щоб продовжити.</p>
 </div>
 
-<div class="row">
-  <div class="col-sm-6 mb-3 mb-sm-0">
-    <div class="card bg-navy text-white">
-      <div class="card-body">
-        <h5 class="card-title">
-          <i class="bi bi-calendar3"></i> Календар пadasdasdadsa
-        </h5>
-        <p class="card-text">Тут ви можете дізнатися події, які вібулися або відбудуться.</p>
-        <a href="/article/" class="btn btn-outline-light">
-          <i class="bi bi-box-arrow-up-right"></i> Перейти
-        </a>
-      </div>
-    </div>
-  </div>
-  <div class="col-sm-6">
-    <div class="card bg-navy text-white">
-      <div class="card-body">
-        <h5 class="card-title">
-          <i class="bi bi-book-half"></i> Щоденник
-        </h5>
-        <p class="card-text">Тут ви можете дізнатися ваші оцінки.</p>
-        <a href="/diary/" class="btn btn-outline-light">
-          <i class="bi bi-box-arrow-up-right"></i> Перейти
-        </a>
-      </div>
-    </div>
-  </div>
+<div class="d-flex flex-wrap justify-content-center gap-4">
+
+  <a href="/subscriptions/" 
+     class="btn btn-lg px-5 py-3 text-white" 
+     style="background:linear-gradient(135deg,#ff6600,#ff8800); border:none; border-radius:15px; transition:0.3s;">
+     <i class="bi bi-person-heart me-2"></i> Мої підписки
+  </a>
+
+  <a href="/article/" 
+     class="btn btn-lg px-5 py-3 text-white" 
+     style="background:linear-gradient(135deg,#444,#666); border:none; border-radius:15px; transition:0.3s;">
+     <i class="bi bi-journal-text me-2"></i> Статті
+  </a>
+
+  <a href="/announcements/" 
+     class="btn btn-lg px-5 py-3 text-white" 
+     style="background:linear-gradient(135deg,#0066cc,#0099ff); border:none; border-radius:15px; transition:0.3s;">
+     <i class="bi bi-megaphone me-2"></i> Оголошення
+  </a>
+
 </div>
 
-<div class="row">
-  <div class="col-sm-6 mb-3 mb-sm-0">
-    <div class="card bg-navy text-white">
-      <div class="card-body">
-        <h5 class="card-title">
-          <i class="bi bi-image"></i> Галерея
-        </h5>
-        <p class="card-text">Тут ви можете викласти або переглянути фото.</p>
-        <a href="/galery/" class="btn btn-outline-light">
-          <i class="bi bi-box-arrow-up-right"></i> Перейти
-        </a>
-      </div>
-    </div>
-  </div>
-  <div class="col-sm-6">
-    <div class="card bg-navy text-white">
-      <div class="card-body">
-        <h5 class="card-title">
-          <i class="bi bi-person-square"></i> Портфоліо
-        </h5>
-        <p class="card-text">Тут ви можете переглянути роботи інших, та викласти свою.</p>
-        <a href="/portfolio/" class="btn btn-outline-light">
-          <i class="bi bi-box-arrow-up-right"></i> Перейти
-        </a>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="row">
-  <div class="col-sm-6 mb-3 mb-sm-0">
-    <div class="card bg-navy text-white">
-      <div class="card-body">
-        <h5 class="card-title">
-          <i class="bi bi-archive"></i> Матеріали
-        </h5>
-        <p class="card-text">Тут ви можете переглянути цікаві матеріали.</p>
-        <a href="/materials/" class="btn btn-outline-light">
-          <i class="bi bi-box-arrow-up-right"></i> Перейти
-        </a>
-      </div>
-    </div>
-  </div>
-  <div class="col-sm-6">
-    <div class="card bg-navy text-white">
-      <div class="card-body">
-        <h5 class="card-title">
-          <i class="bi bi-bar-chart-line"></i> Опитування
-        </h5>
-        <p class="card-text">Тут ви можете взяти участь у деяких опитуваннях.</p>
-        <a href="/polls/" class="btn btn-outline-light">
-            <i class="bi bi-box-arrow-up-right"></i> Перейти
-        </a>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="row">
-  <div class="col-sm-6 mb-3 mb-sm-0">
-    <div class="card bg-navy text-white">
-      <div class="card-body">
-        <h5 class="card-title">
-          <i class="bi bi-messenger"></i> Форум
-        </h5>
-        <p class="card-text">Тут ви можете створювати теми для обговорення.</p>
-        <a href="/forum/" class="btn btn-outline-light">
-          <i class="bi bi-box-arrow-up-right"></i> Перейти
-        </a>
-      </div>
-    </div>
-  </div>
-  <div class="col-sm-6">
-    <div class="card bg-navy text-white">
-      <div class="card-body">
-        <h5 class="card-title">
-          <i class="bi bi-newspaper"></i> Оголошення
-        </h5>
-        <p class="card-text">Тут ви можете переглянути цікаві новини.</p>
-        <a href="/advertisement/" class="btn btn-outline-light">
-            <i class="bi bi-box-arrow-up-right"></i> Перейти
-        </a>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-
-
+<style>
+a.btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+</style>
 {% endblock %}

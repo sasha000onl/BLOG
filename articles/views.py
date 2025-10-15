@@ -1,12 +1,14 @@
 from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy
-from django.shortcuts import get_object_or_404
 from django.db import models
 from django.views.generic.edit import FormMixin
 from django.shortcuts import redirect
 from .models import Article, Comment
 from .forms import CommentForm, ArticleForm
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 
 class ArticleDetailView(FormMixin, DetailView):
     model = Article
@@ -106,3 +108,45 @@ class ArticleDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     def test_func(self):
         article = self.get_object()
         return self.request.user == article.author or self.request.user.is_staff
+
+class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Comment
+    template_name = 'articles/comment_confirm_delete.html'
+
+    def get_success_url(self):
+        return reverse_lazy('articles:article_detail', kwargs={'slug': self.object.article.slug})
+
+    def test_func(self):
+        comment = self.get_object()
+        return self.request.user == comment.author or self.request.user.is_staff
+
+@login_required
+def comment_edit(request, pk):
+    comment = get_object_or_404(Comment, pk=pk)
+    if request.user != comment.author and not request.user.is_staff:
+        messages.error(request, "Ви не можете редагувати цей коментар.")
+        return redirect("articles:article_detail", slug=comment.article.slug)
+
+    if request.method == "POST":
+        form = CommentForm(request.POST, instance=comment)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Коментар оновлено ✅")
+            return redirect("articles:article_detail", slug=comment.article.slug)
+    else:
+        form = CommentForm(instance=comment)
+
+    return render(request, "articles/comment_edit.html", {"form": form, "comment": comment})
+
+
+@login_required
+def comment_delete(request, pk):
+    comment = get_object_or_404(Comment, pk=pk)
+    if request.user != comment.author and not request.user.is_staff:
+        messages.error(request, "Ви не можете видалити цей коментар.")
+        return redirect("articles:article_detail", slug=comment.article.slug)
+
+    article_slug = comment.article.slug
+    comment.delete()
+    messages.success(request, "Коментар видалено 🗑️")
+    return redirect("articles:article_detail", slug=article_slug)

@@ -1,30 +1,84 @@
 {% extends 'base/_base.html' %}
 
 {% block content %}
-<h2>{{ article.title }}</h2>
-<p>{{ article.content|linebreaks }}</p>
-<p>Автор: {{ article.author.username }} | {{ article.created_at|date:"d.m.Y H:i" }}</p>
+<div class="article-detail">
 
-<hr>
-<h3>Коментарі:</h3>
-{% for comment in comments %}
-  <div style="margin-bottom:10px; color:#555; padding:8px; background:#f8f9fa; border-radius:5px;">
-    <strong>{{ comment.author.username }}</strong> — {{ comment.created_at|date:"d.m.Y H:i" }}<br>
-    {{ comment.content }}
+  <h2 class="text-orange">{{ article.title }}</h2>
+
+  {% if article.image %}
+    <img src="{{ article.image.url }}" alt="{{ article.title }}"
+         class="img-fluid rounded mb-3" style="max-height:400px; object-fit:cover;">
+  {% endif %}
+
+  <p style="white-space: pre-line;">{{ article.content }}</p>
+
+  <p class="text-secondary">
+      Автор: <strong>{{ article.author.username }}</strong> |
+      {{ article.created_at|date:"d.m.Y H:i" }}
+  </p>
+
+  {% if user == article.author or user.is_staff %}
+  <div class="mb-3 d-flex gap-2">
+      <a href="{% url 'articles:article_update' slug=article.slug %}"
+         class="btn btn-warning btn-sm" style="border-radius:8px;">
+          ✏️ Редагувати
+      </a>
+      <form action="{% url 'articles:article_delete' slug=article.slug %}" method="post" class="d-inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger btn-sm" style="border-radius:8px;">
+              🗑️ Видалити статтю
+          </button>
+      </form>
   </div>
-{% empty %}
-  <p>Поки що немає коментарів. 📝 Будьте першим!</p>
-{% endfor %}
+  {% endif %}
 
-<hr>
-{% if user.is_authenticated %}
-<h3>Додати коментар:</h3>
-<form method="post">
-  {% csrf_token %}
-  {{ comment_form.as_p }}
-  <button type="submit" style="padding:8px 14px; background:#4CAF50; color:white; border:none; border-radius:5px;">📨 Надіслати</button>
-</form>
-{% else %}
-<p>Увійдіть, щоб залишити коментар.</p>
-{% endif %}
+  <hr>
+
+  <h3>Коментарі:</h3>
+
+  {% if comments %}
+    {% for comment in comments %}
+      <div class="comment my-3 p-3 rounded" style="background:#2b2b2b;">
+        <strong>{{ comment.author.username }}</strong>
+        <p class="mb-1" style="white-space: pre-line;">{{ comment.content }}</p>
+        <small class="text-secondary d-block mb-2">
+          {{ comment.created_at|date:"d.m.Y H:i" }}
+        </small>
+
+        {% if user == comment.author or user.is_staff %}
+          <div class="d-flex gap-2">
+            <a href="{% url 'articles:comment_edit' comment.pk %}" 
+               class="btn btn-sm btn-warning" style="border-radius:8px;">
+              ✏️ Редагувати
+            </a>
+            <form action="{% url 'articles:comment_delete' comment.pk %}" method="post" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-danger" style="border-radius:8px;">
+                🗑️ Видалити
+              </button>
+            </form>
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>Коментарів поки немає.</p>
+  {% endif %}
+
+  <hr>
+
+  {% if user.is_authenticated %}
+    <h3>Додати коментар:</h3>
+    <form method="post">
+      {% csrf_token %}
+      {{ comment_form.as_p }}
+      <button type="submit"
+              style="padding:8px 14px; background:#4CAF50; color:white; border:none; border-radius:5px;">
+        📨 Надіслати
+      </button>
+    </form>
+  {% else %}
+    <p>🔒 <a href="{% url 'accounts:login' %}" style="color:#ff6a00;">Увійдіть</a>, щоб залишити коментар.</p>
+  {% endif %}
+</div>
 {% endblock %}
