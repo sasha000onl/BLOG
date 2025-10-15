@@ -1,41 +1,18 @@
-from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy
-from django.db import models
 from django.views.generic.edit import FormMixin
-from django.shortcuts import redirect
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from django.urls import reverse_lazy
-from django.core.mail import send_mail
-from .models import Article, Category, Tag, Rating, Subscription, Comment
-from .forms import ArticleForm, RatingForm, CategoryForm, TagForm, CommentForm
-
-class ArticleDetailView(FormMixin, DetailView):
-    model = Article
-    template_name = 'articles/article_detail.html'
-    context_object_name = 'article'
-    form_class = CommentForm
+from django.contrib.auth.decorators import login_required
+from .models import Article, Comment
+from .forms import ArticleForm, CommentForm, RatingForm
+from django.db.models import Q
 
 
-    def post(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        form = self.get_form()
-        if form.is_valid():
-            comment = form.save(commit=False)
-            comment.article = self.object
-            comment.author = request.user
-            comment.save()
-            return redirect('articles:article_detail', slug=self.object.slug)
-        return self.form_invalid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['comment_form'] = self.get_form()  # обов'язково
-        context['comments'] = self.object.comments.order_by('-created_at')  # всі коментарі
-        return context
+# -----------------------------------
+# Article Views
+# -----------------------------------
 
 class ArticleListView(ListView):
     model = Article
@@ -49,8 +26,7 @@ class ArticleListView(ListView):
         qs = Article.objects.filter(status='published')
         if self.request.user.is_authenticated:
             qs = Article.objects.filter(
-                models.Q(status='published') |
-                models.Q(status='draft', author=self.request.user)
+                Q(status='published') | Q(status='draft', author=self.request.user)
             ).distinct()
         return qs
 
@@ -65,31 +41,6 @@ class ArticleCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         form.instance.author = self.request.user
         return super().form_valid(form)
-
-
-
-class ArticleDetailView(FormMixin, DetailView):
-    model = Article
-    template_name = 'articles/article_detail.html'
-    context_object_name = 'article'
-    form_class = CommentForm
-
-    def post(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        form = self.get_form()
-        if form.is_valid():
-            comment = form.save(commit=False)
-            comment.article = self.object
-            comment.author = request.user
-            comment.save()
-            return redirect('articles:article_detail', slug=self.object.slug)
-        return self.form_invalid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['comment_form'] = self.get_form()   # обов’язково!
-        context['comments'] = self.object.comments.order_by('created_at')
-        return context
 
 
 class ArticleUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
@@ -111,6 +62,43 @@ class ArticleDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         article = self.get_object()
         return self.request.user == article.author or self.request.user.is_staff
 
+
+# -----------------------------------
+# ArticleDetailView з формою коментаря
+# -----------------------------------
+
+class ArticleDetailView(FormMixin, DetailView):
+    model = Article
+    template_name = 'articles/article_detail.html'
+    context_object_name = 'article'
+    form_class = CommentForm
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.article = self.object
+            comment.author = request.user
+            comment.save()
+            messages.success(request, "Коментар додано ✅")
+            return redirect('articles:article_detail', slug=self.object.slug)
+        return self.form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['comment_form'] = self.get_form()  # поле коментаря
+        context['comments'] = self.object.comments.order_by('-created_at')  # всі коментарі
+        context['rating_form'] = RatingForm()  # якщо треба для рейтингу
+        if hasattr(self.object, 'average_rating'):
+            context['average_rating'] = self.object.average_rating()
+        return context
+
+
+# -----------------------------------
+# Коментарі
+# -----------------------------------
+
 class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Comment
     template_name = 'articles/comment_confirm_delete.html'
@@ -121,6 +109,7 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     def test_func(self):
         comment = self.get_object()
         return self.request.user == comment.author or self.request.user.is_staff
+
 
 @login_required
 def comment_edit(request, pk):
@@ -153,19 +142,10 @@ def comment_delete(request, pk):
     messages.success(request, "Коментар видалено 🗑️")
     return redirect("articles:article_detail", slug=article_slug)
 
-class ArticleDetailView(DetailView):
-    model = Article
-    template_name = 'articles/article_detail.html'
-    context_object_name = 'article'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        article = self.object
-        context['comments'] = article.comments.all()
-        context['comment_form'] = self.request.POST or None
-        context['rating_form'] = RatingForm()
-        context['average_rating'] = article.average_rating()
-        return context
+# -----------------------------------
+# Рейтинг
+# -----------------------------------
 
 @login_required
 def rate_article(request, slug):
@@ -180,18 +160,7 @@ def rate_article(request, slug):
             )
     return redirect('articles:article_detail', slug=slug)
 
-
 @login_required
 def subscribe(request):
     Subscription.objects.get_or_create(user=request.user)
     return redirect('articles:article_list')
-
-
-def notify_subscribers(article):
-    for sub in Subscription.objects.all():
-        send_mail(
-            subject=f'📰 Нова стаття: {article.title}',
-            message=f'Переглянь нову статтю: {article.title}\n\n{article.content[:200]}...',
-            from_email='no-reply@blog.com',
-            recipient_list=[sub.user.email],
-        )

@@ -31,12 +31,26 @@ class RatingForm(forms.ModelForm):
             'value': forms.NumberInput(attrs={'min': 1, 'max': 5, 'class': 'form-control w-25'}),
         }
 
+from django import forms
+from .models import Category, Tag
+
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
         fields = ['name']
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # початкове значення
+        self.fields['name'].initial = 'None'
+
+
 class TagForm(forms.ModelForm):
     class Meta:
         model = Tag
         fields = ['name']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # початкове значення
+        self.fields['name'].initial = 'None'

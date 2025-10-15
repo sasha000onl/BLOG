@@ -18,39 +18,47 @@
   </p>
 
   {% if user == article.author or user.is_staff %}
-  <div class="mb-3 d-flex gap-2">
-      <a href="{% url 'articles:article_update' slug=article.slug %}"
-         class="btn btn-warning btn-sm" style="border-radius:8px;">
-          ✏️ Редагувати
-      </a>
-      <form action="{% url 'articles:article_delete' slug=article.slug %}" method="post" class="d-inline">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-danger btn-sm" style="border-radius:8px;">
-              🗑️ Видалити статтю
-          </button>
-      </form>
-  </div>
+    <div class="mb-3 d-flex gap-2">
+      {% if article.slug %}
+        <a href="{% url 'articles:article_update' slug=article.slug %}"
+           class="btn btn-warning btn-sm" style="border-radius:8px;">
+            ✏️ Редагувати
+        </a>
+        <form action="{% url 'articles:article_delete' slug=article.slug %}" method="post" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger btn-sm" style="border-radius:8px;">
+                🗑️ Видалити статтю
+            </button>
+        </form>
+      {% endif %}
+    </div>
   {% endif %}
 
   <hr>
 
   <p class="text-secondary">
-    Категорія: {{ article.category.name }} |
+    Категорія: {% if article.category %}{{ article.category.name }}{% else %}—{% endif %} |
     Теги:
-    {% for tag in article.tags.all %}
-      <span style="background:#444; color:#ff6a00; padding:2px 8px; border-radius:5px;">{{ tag.name }}</span>
-    {% endfor %}
+    {% if article.tags.all %}
+      {% for tag in article.tags.all %}
+        <span style="background:#444; color:#ff6a00; padding:2px 8px; border-radius:5px;">{{ tag.name }}</span>
+      {% endfor %}
+    {% else %}
+      —
+    {% endif %}
   </p>
 
   <hr>
 
-  <h3>⭐ Оцінка: {{ average_rating }}/5</h3>
+  <h3>⭐ Оцінка: {% if average_rating %}{{ average_rating }}/5{% else %}—{% endif %}</h3>
   {% if user.is_authenticated %}
-    <form method="post" action="{% url 'articles:rate_article' slug=article.slug %}">
-      {% csrf_token %}
-      {{ rating_form.value }}
-      <button type="submit" class="btn btn-primary btn-sm mt-2">Поставити оцінку</button>
-    </form>
+    {% if article.slug %}
+      <form method="post" action="{% url 'articles:rate_article' slug=article.slug %}">
+        {% csrf_token %}
+        {{ rating_form.value }}
+        <button type="submit" class="btn btn-primary btn-sm mt-2">Поставити оцінку</button>
+      </form>
+    {% endif %}
   {% else %}
     <p>🔒 Увійдіть, щоб оцінювати статті.</p>
   {% endif %}
@@ -69,16 +77,18 @@
 
         {% if user == comment.author or user.is_staff %}
           <div class="d-flex gap-2">
-            <a href="{% url 'articles:comment_edit' comment.pk %}" 
-               class="btn btn-sm btn-warning" style="border-radius:8px;">
-              ✏️ Редагувати
-            </a>
-            <form action="{% url 'articles:comment_delete' comment.pk %}" method="post" class="d-inline">
-              {% csrf_token %}
-              <button type="submit" class="btn btn-sm btn-danger" style="border-radius:8px;">
-                🗑️ Видалити
-              </button>
-            </form>
+            {% if comment.pk %}
+              <a href="{% url 'articles:comment_edit' comment.pk %}" 
+                 class="btn btn-sm btn-warning" style="border-radius:8px;">
+                ✏️ Редагувати
+              </a>
+              <form action="{% url 'articles:comment_delete' comment.pk %}" method="post" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-danger" style="border-radius:8px;">
+                  🗑️ Видалити
+                </button>
+              </form>
+            {% endif %}
           </div>
         {% endif %}
       </div>

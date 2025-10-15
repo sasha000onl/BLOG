@@ -32,9 +32,16 @@ class Article(models.Model):
         ratings = self.ratings.all()
         return round(sum(r.value for r in ratings) / len(ratings), 1) if ratings else 0
 
+
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.title)
+            base_slug = slugify(self.title)
+            slug = base_slug
+            n = 1
+            while Article.objects.filter(slug=slug).exists():
+                slug = f"{base_slug}-{n}"
+                n += 1
+            self.slug = slug
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -47,6 +54,7 @@ class Comment(models.Model):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     content = models.TextField(verbose_name="Коментар")
     created_at = models.DateTimeField(auto_now_add=True)
+
 
     class Meta:
         ordering = ['created_at']
