@@ -9,7 +9,9 @@ from .models import Article, Comment
 from .forms import ArticleForm, CommentForm, RatingForm
 from django.db.models import Q
 from .models import Rating
-
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 # -----------------------------------
 # Article Views
@@ -48,6 +50,7 @@ class ArticleUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Article
     form_class = ArticleForm
     template_name = 'articles/article_form.html'
+    success_url = reverse_lazy('articles:article_list')
 
     def test_func(self):
         article = self.get_object()
@@ -165,3 +168,4 @@ def rate_article(request, slug):
 def subscribe(request):
     Subscription.objects.get_or_create(user=request.user)
     return redirect('articles:article_list')
+

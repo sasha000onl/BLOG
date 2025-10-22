@@ -1,9 +1,44 @@
 {% extends "base/_base.html" %}
 {% block content %}
-  <h2>{% if form.instance.pk %}Редагування{% else %}Створення{% endif %} статті</h2>
-  <form method="post" enctype="multipart/form-data">
+<div class="container my-4" style="max-width: 700px;">
+  <h2 class="text-orange mb-3">
+    {% if form.instance.pk %}Редагування{% else %}Створення{% endif %} статті
+  </h2>
+
+  <form method="post" class="p-3 rounded" style="background:#2b2b2b;">
     {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Зберегти</button>
+
+    <div class="mb-3">
+      {{ form.title.label_tag }}
+      {{ form.title }}
+    </div>
+
+    <div class="mb-3">
+      {{ form.content.label_tag }}
+      {{ form.content }}
+    </div>
+
+    <div class="mb-3">
+      {{ form.status.label_tag }}
+      {{ form.status }}
+    </div>
+
+<div class="mb-3">
+  {{ form.tags.label_tag }}
+  {{ form.tags }}
+  <small>Або додати новий тег:</small>
+  {{ form.new_tag }}
+</div>
+
+<div class="mb-3">
+  {{ form.category.label_tag }}
+  {{ form.category }}
+  <small>Або додати нову категорію:</small>
+  {{ form.new_category }}
+</div>
+
+
+    <button type="submit" class="btn btn-success w-100">💾 Зберегти</button>
   </form>
+</div>
 {% endblock %}

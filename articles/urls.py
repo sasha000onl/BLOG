@@ -26,4 +26,6 @@ urlpatterns = [
 
     path('<slug:slug>/rate/', views.rate_article, name='rate_article'),
     path('subscribe/', views.subscribe, name='subscribe'),
+
+  
 ]
