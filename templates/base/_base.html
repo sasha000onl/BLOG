@@ -18,8 +18,8 @@
       color: #f5f5f5;
       font-family: "Segoe UI", sans-serif;
       min-height: 100vh;
-      padding-top: 70px; /* щоб navbar не перекривав контент */
-      padding-bottom: 60px; /* щоб footer не перекривав контент */
+      padding-top: 70px;
+      padding-bottom: 60px;
     }
 
     @keyframes gradientFlow {
@@ -42,11 +42,68 @@
     .navbar-brand {
       color: #ff6a00 !important;
       font-weight: bold;
+      font-size: 1.5rem;
+      text-decoration: none;
+      transition: 0.4s;
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      line-height: 1;
+      height: 1.6rem; /* фіксована висота для вирівнювання */
     }
+
+    /* Pornhub-версія (прихована за замовчуванням) */
+    .logo-alt {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      transform: translateY(-50%) scale(0.96);
+      opacity: 0;
+      transition: opacity 0.4s ease, transform 0.3s ease;
+      display: flex;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .logo-white {
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+
+    .logo-orange {
+      background-color: #ff9900;
+      color: #000;
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-left: 4px;
+      font-weight: 700;
+      font-size: 1.5rem;
+      line-height: 1;
+      box-shadow: 0 0 0 rgba(0,0,0,0);
+      transition: box-shadow 0.3s ease;
+    }
+
+    /* Ефект при наведенні */
+    .navbar-brand:hover {
+      color: transparent !important;
+    }
+
+    .navbar-brand:hover .logo-alt {
+      opacity: 1;
+      transform: translateY(-50%) scale(1);
+    }
+
+    .navbar-brand:hover .logo-orange {
+      box-shadow: 0 0 10px rgba(255,153,0,0.5);
+    }
+
     .nav-link {
       color: #f5f5f5 !important;
       transition: 0.3s;
     }
+
     .nav-link:hover {
       color: #ff6a00 !important;
     }
@@ -89,10 +146,17 @@
   <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container">
-      <a class="navbar-brand" href="/">BLOG++</a>
+      <a class="navbar-brand" href="/">
+        BLOG++
+        <span class="logo-alt">
+          <span class="logo-white">Blog</span><span class="logo-orange">++</span>
+        </span>
+      </a>
+
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
       </button>
+
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto">
           {% if user.is_authenticated %}
