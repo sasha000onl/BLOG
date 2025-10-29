@@ -21,7 +21,8 @@ class ArticleListView(ListView):
     model = Article
     template_name = 'articles/article_list.html'
     context_object_name = 'articles'
-    ordering = ['-created_at']
+    paginate_by = 6
+    queryset = Article.objects.filter(status='published').order_by('-created_at')
 
     def get_queryset(self):
         if self.request.user.is_staff:
@@ -99,6 +100,25 @@ class ArticleDetailView(FormMixin, DetailView):
         return context
 
 
+# 1. Опубліковані (для всіх)
+class PublicArticleListView(ListView):
+    model = Article
+    template_name = 'articles/article_list.html'
+    context_object_name = 'articles'
+    paginate_by = 6
+
+    def get_queryset(self):
+        return Article.objects.filter(status='published').order_by('-created_at')
+
+# 2. Твої статті (включно з чернетками)
+class MyArticleListView(LoginRequiredMixin, ListView):
+    model = Article
+    template_name = 'articles/my_articles.html'
+    context_object_name = 'articles'
+    paginate_by = 10
+
+    def get_queryset(self):
+        return Article.objects.filter(author=self.request.user).order_by('-created_at')
 # -----------------------------------
 # Коментарі
 # -----------------------------------
@@ -169,3 +189,20 @@ def subscribe(request):
     Subscription.objects.get_or_create(user=request.user)
     return redirect('articles:article_list')
 
+def article_update(request, slug):
+    article = get_object_or_404(Article, slug=slug)
+    
+    if request.method == 'POST':
+        form = ArticleForm(request.POST, request.FILES, instance=article)
+        if form.is_valid():
+            form.save()
+            return redirect('articles:article_detail', slug=article.slug)
+    else:
+        form = ArticleForm(instance=article)
+
+    return render(request, 'articles/article_form.html', {
+        'form': form,
+        'article': article,
+        'categories': Category.objects.all(),  # ← ОБОВ'ЯЗКОВО
+        'tags': Tag.objects.all(),             # ← ОБОВ'ЯЗКОВО
+    })

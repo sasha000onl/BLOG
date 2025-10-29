@@ -1,0 +1,94 @@
+<!-- templates/articles/my_articles.html -->
+{% extends 'base/_base.html' %}
+
+{% block content %}
+<div class="container py-5" style="background: #111; color: #eee; min-height: 80vh;">
+
+  <!-- ЗАГОЛОВОК + КНОПКА -->
+  <div class="d-flex justify-content-between align-items-center mb-5">
+    <h1 class="display-6 fw-bold" style="color: #ff6a00; margin: 0;">
+      Мої статті
+    </h1>
+    <a href="{% url 'articles:article_create' %}" 
+       class="btn btn-success btn-lg px-4 rounded-pill shadow-sm"
+       style="background: #28a745; border: none; font-weight: 600;">
+      Написати
+    </a>
+  </div>
+
+  <!-- СПИСОК СТАТЕЙ -->
+  {% if articles %}
+    <div class="row g-4">
+      {% for article in articles %}
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100 border-0 shadow-sm"
+               style="background: #1e1e1e; border-left: 5px solid #ff6a00; transition: transform 0.2s;"
+               onmouseover="this.style.transform='translateY(-5px)'"
+               onmouseout="this.style.transform='translateY(0)'">
+
+            <!-- ФОТО -->
+            {% if article.content_type == 'image' and article.media_file %}
+              <div class="position-relative">
+                <img src="{{ article.media_file.url }}"
+                     alt="{{ article.title }}"
+                     class="card-img-top"
+                     style="height: 160px; object-fit: cover; border-bottom: 2px solid #ff6a00;">
+                <span class="position-absolute top-0 end-0 m-2 badge rounded-pill"
+                      style="background: #ff6a00; color: white; font-size: 0.7em;">
+                  Фото
+                </span>
+              </div>
+            {% endif %}
+
+            <!-- КОНТЕНТ -->
+            <div class="card-body d-flex flex-column p-3">
+              <h5 class="card-title mb-2">
+                <a href="{% url 'articles:article_detail' slug=article.slug %}"
+                   class="text-decoration-none"
+                   style="color: #ff8c00; font-weight: 600; font-size: 1.1em;">
+                  {{ article.title }}
+                </a>
+              </h5>
+
+              <p class="text-muted small mb-2" style="color: #aaa;">
+                {{ article.created_at|date:"d.m.Y H:i" }}
+                {% if article.status == 'draft' %}
+                  <span class="badge bg-warning text-dark ms-2" style="font-size: 0.7em;">Чернетка</span>
+                {% else %}
+                  <span class="badge bg-success text-white ms-2" style="font-size: 0.7em;">Опубліковано</span>
+                {% endif %}
+              </p>
+
+              <!-- КНОПКИ -->
+              <div class="mt-auto d-flex gap-1">
+                <a href="{% url 'articles:article_update' slug=article.slug %}"
+                   class="btn btn-sm btn-warning flex-fill"
+                   style="font-weight: 600; border-radius: 8px;">
+                  Редагувати
+                </a>
+                <a href="{% url 'articles:article_detail' slug=article.slug %}"
+                   class="btn btn-sm btn-primary flex-fill"
+                   style="font-weight: 600; border-radius: 8px;">
+                  Переглянути
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-5">
+      <p class="fs-5" style="color: #ccc;">
+        У вас ще немає статей.
+      </p>
+      <a href="{% url 'articles:article_create' %}" 
+         class="btn btn-outline-warning btn-lg px-5 rounded-pill"
+         style="border-color: #ff6a00; color: #ff6a00;">
+        Створити першу статтю
+      </a>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

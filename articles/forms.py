@@ -3,40 +3,31 @@ from .models import Article, Comment, Rating, Category, Tag
 
 
 class ArticleForm(forms.ModelForm):
-    new_tag = forms.CharField(required=False, label="Додати новий тег")
-    new_category = forms.CharField(required=False, label="Додати нову категорію")
-
     class Meta:
         model = Article
-        fields = ['title', 'content', 'status', 'category', 'tags']
-        widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control'}),
-            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 8}),
-            'status': forms.Select(attrs={'class': 'form-select'}),
-            'category': forms.Select(attrs={'class': 'form-select'}),
-            'tags': forms.CheckboxSelectMultiple(),
-        }
+        fields = [
+            'title', 'content', 'content_type',
+            'media_file', 'media_url',
+            'status', 'category', 'tags'
+        ]
 
-    def save(self, commit=True, user=None):
-        article = super().save(commit=False)
+    def clean(self):
+        cleaned_data = super().clean()
+        ctype = cleaned_data.get('content_type')
+        file = cleaned_data.get('media_file')
+        url = cleaned_data.get('media_url')
 
-        # --- створюємо нову категорію, якщо введена ---
-        new_cat = self.cleaned_data.get('new_category')
-        if new_cat:
-            category_obj, created = Category.objects.get_or_create(name=new_cat)
-            article.category = category_obj
+        if ctype == 'image' and not file and not self.instance.media_file:
+            self.add_error('media_file', 'Завантажте фото.')
+        if ctype == 'video' and not url and not self.instance.media_url:
+            self.add_error('media_url', 'Вставте посилання на відео.')
+        return cleaned_data
 
-        if commit:
-            article.save()
-            self.save_m2m()
-
-            # --- створюємо новий тег, якщо введений ---
-            new_tag = self.cleaned_data.get('new_tag')
-            if new_tag:
-                tag_obj, created = Tag.objects.get_or_create(name=new_tag)
-                article.tags.add(tag_obj)
-
-        return article
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Передаємо всі теги та категорії
+        self.fields['category'].queryset = Category.objects.all()
+        self.fields['tags'].queryset = Tag.objects.all()
 
 
 class CommentForm(forms.ModelForm):

@@ -1,114 +1,236 @@
+<!-- templates/articles/article_detail.html -->
 {% extends 'base/_base.html' %}
 
 {% block content %}
-<div class="container my-4">
+<div class="container py-5">
 
-  <h2 class="text-orange">{{ article.title }}</h2>
-
-  <p style="white-space: pre-line;">{{ article.content }}</p>
-
-  <p class="text-secondary">
-      Автор: <strong>{{ article.author.username }}</strong> |
-      Статус: {{ article.get_status_display }} |
-      Опубліковано: {{ article.created_at|date:"d.m.Y H:i" }}
-  </p>
-
-  {% if article.updated_at > article.created_at %}
-    <p class="text-secondary">Оновлено: {{ article.updated_at|date:"d.m.Y H:i" }}</p>
+  <!-- === МУЛЬТИМЕДІА === -->
+  {% if article.content_type == 'image' and article.media_file %}
+    <div class="text-center mb-5">
+      <img src="{{ article.media_file.url }}"
+           alt="{{ article.title }}"
+           class="img-fluid rounded-4 shadow-lg"
+           style="max-height: 520px; border: 4px solid #ff6a00; border-radius: 16px;">
+    </div>
+  {% elif article.content_type == 'video' and article.media_url %}
+    <div class="ratio ratio-16x9 mb-5 shadow-lg"
+         style="border: 4px solid #ff6a00; border-radius: 16px; overflow: hidden;">
+      <iframe src="{{ article.media_url|safe }}"
+              allowfullscreen
+              class="rounded-4"
+              style="border: 0;"></iframe>
+    </div>
   {% endif %}
 
+  <!-- === ЗАГОЛОВОК === -->
+  <div class="text-center mb-4">
+    <h1 class="display-5 fw-bold text-orange" style="letter-spacing: 1px;">
+      {{ article.title }}
+    </h1>
+  </div>
+
+  <!-- === МЕТАДАНІ === -->
+  <div class="text-center text-secondary mb-4">
+    <p class="mb-1">
+      <strong>{{ article.author.username }}</strong> |
+      <span class="badge bg-warning text-dark px-3 py-1">{{ article.get_status_display }}</span> |
+      {{ article.created_at|date:"d.m.Y H:i" }}
+    </p>
+    {% if article.updated_at > article.created_at %}
+      <p class="text-muted small">Оновлено: {{ article.updated_at|date:"d.m.Y H:i" }}</p>
+    {% endif %}
+  </div>
+
+  <!-- === КНОПКИ (автор/адмін) === -->
   {% if user == article.author or user.is_staff %}
-    <div class="mb-3 d-flex gap-2">
+    <div class="text-center mb-4">
       <a href="{% url 'articles:article_update' slug=article.slug %}"
-         class="btn btn-warning btn-sm" style="border-radius:8px;">
-          ✏️ Редагувати
+         class="btn btn-warning btn-lg px-4 me-2"
+         style="border-radius:12px; font-weight:600;">
+         Редагувати
       </a>
       <form action="{% url 'articles:article_delete' slug=article.slug %}" method="post" class="d-inline">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-danger btn-sm" style="border-radius:8px;">
-              🗑️ Видалити статтю
-          </button>
+        {% csrf_token %}
+        <button type="submit"
+                class="btn btn-danger btn-lg px-4"
+                style="border-radius:12px; font-weight:600;"
+                onclick="return confirm('Видалити назавжди?')">
+         Видалити
+        </button>
       </form>
     </div>
   {% endif %}
 
-  <hr>
+  <hr class="border-2 border-orange opacity-75">
 
-  <p class="text-secondary">
-    Категорія:
-    {% if article.category %}
-      {{ article.category.name }}
+  <!-- === КАТЕГОРІЯ + ТЕГИ === -->
+  <div class="text-center mb-5">
+    <p class="mb-2">
+      <strong>Категорія:</strong>
+      {% if article.category %}
+        <span class="badge bg-dark text-orange fs-6 px-3">{{ article.category.name }}</span>
+      {% else %}
+        <span class="text-muted">—</span>
+      {% endif %}
+    </p>
+    <p>
+      <strong>Теги:</strong>
+      {% if article.tags.exists %}
+        {% for tag in article.tags.all %}
+          <span class="badge mx-1"
+                style="background:#333; color:#ff8c00; padding:6px 12px; border-radius:10px; font-size:0.9em;">
+            {{ tag.name }}
+          </span>
+        {% endfor %}
+      {% else %}
+        <span class="text-muted">—</span>
+      {% endif %}
+    </p>
+  </div>
+
+  <!-- === КОНТЕНТ === -->
+  <div class="content mx-auto mb-5 p-4 rounded-3 shadow-sm"
+       style="max-width: 900px; background:#1a1a1a; line-height: 1.9; font-size: 1.1em; white-space: pre-line;">
+    {{ article.content }}
+  </div>
+
+  <!-- === ОЦІНКА === -->
+  <div class="text-center bg-dark p-4 rounded-4 shadow mb-5"
+       style="max-width: 600px; margin: 0 auto; border: 2px solid #ff6a00;">
+    <h3 class="text-orange mb-3">
+      Оцінка: <strong>{{ article.average_rating|floatformat:1 }}/5</strong>
+      <small class="text-secondary">({{ article.ratings.count }} голосів)</small>
+    </h3>
+
+    {% if user.is_authenticated %}
+      <form method="post" action="{% url 'articles:rate_article' slug=article.slug %}" class="d-inline-block">
+        {% csrf_token %}
+        <div class="d-flex justify-content-center gap-3 align-items-center">
+          <select name="value" class="form-select" style="width: auto;" required>
+            <option value="">— Обрати —</option>
+            {% for i in "12345" %}
+              <option value="{{ forloop.counter }}">{{ forloop.counter }} ★</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="btn btn-primary px-4">
+            Оцінити
+          </button>
+        </div>
+      </form>
     {% else %}
-      <span>—</span>
+      <p class="mb-0">
+        <a href="{% url 'accounts:login' %}" class="text-orange">Увійдіть</a>, щоб оцінити.
+      </p>
     {% endif %}
-    |
-    Теги:
-    {% if article.tags.exists %}
-      {% for tag in article.tags.all %}
-        <span style="background:#444; color:#ff6a00; padding:2px 8px; border-radius:5px;">{{ tag.name }}</span>
-      {% endfor %}
-    {% else %}
-      <span>—</span>
-    {% endif %}
-  </p>
+  </div>
+<div class="mx-auto" style="max-width: 800px;">
+  <h3 class="text-orange text-center mb-5 fw-bold">
+    Коментарі ({{ comments.count }})
+  </h3>
 
-  <hr>
-
-  <h3>⭐ Оцінка: {{ average_rating }}/5</h3>
-  {% if user.is_authenticated %}
-    <form method="post" action="{% url 'articles:rate_article' slug=article.slug %}">
-      {% csrf_token %}
-      {{ rating_form.value }}
-      <button type="submit" class="btn btn-primary btn-sm mt-2">Поставити оцінку</button>
-    </form>
-  {% else %}
-    <p>🔒 Увійдіть, щоб оцінювати статті.</p>
-  {% endif %}
-
-  <hr>
-
-  <h3>Коментарі:</h3>
   {% if comments %}
     {% for comment in comments %}
-      <div class="comment my-3 p-3 rounded" style="background:#2b2b2b;">
-        <strong>{{ comment.author.username }}</strong>
-        <p class="mb-1" style="white-space: pre-line;">{{ comment.content }}</p>
-        <small class="text-secondary d-block mb-2">
-          {{ comment.created_at|date:"d.m.Y H:i" }}
-        </small>
+      <div class="card bg-dark border-0 shadow-sm mb-3 rounded-4 overflow-hidden"
+           style="border-left: 6px solid #ff6a00 !important;">
+        <div class="card-body py-3 px-4">
+          <div class="d-flex align-items-start gap-3">
+            
+            <!-- АВАТАРКА -->
+            <div class="flex-shrink-0">
+              {% if comment.author.profile.avatar %}
+                <img src="{{ comment.author.profile.avatar.url }}"
+                     alt="{{ comment.author.username }}"
+                     class="rounded-circle"
+                     style="width: 48px; height: 48px; object-fit: cover; border: 2px solid #ff6a00;">
+              {% else %}
+                <!-- Gravatar або заглушка -->
+                <div class="bg-secondary text-orange rounded-circle d-flex align-items-center justify-content-center"
+                     style="width: 48px; height: 48px; font-weight: bold; font-size: 1.2em; border: 2px solid #ff6a00;">
+                  {{ comment.author.username|first|upper }}
+                </div>
+              {% endif %}
+            </div>
 
-        {% if user == comment.author or user.is_staff %}
-          <div class="d-flex gap-2">
-            <a href="{% url 'articles:comment_edit' comment.pk %}" 
-               class="btn btn-sm btn-warning" style="border-radius:8px;">
-              ✏️ Редагувати
-            </a>
-            <form action="{% url 'articles:comment_delete' comment.pk %}" method="post" class="d-inline">
-              {% csrf_token %}
-              <button type="submit" class="btn btn-sm btn-danger" style="border-radius:8px;">
-                🗑️ Видалити
-              </button>
-            </form>
+            <!-- КОНТЕНТ -->
+            <div class="flex-grow-1">
+              <div class="d-flex justify-content-between align-items-start mb-1">
+                <div>
+                  <strong class="text-orange me-2">{{ comment.author.username }}</strong>
+                  <small class="text-muted">{{ comment.created_at|date:"d.m.Y H:i" }}</small>
+                </div>
+
+                <!-- КНОПКИ (автор або адмін) -->
+                {% if user == comment.author or user.is_staff %}
+                  <div class="d-flex gap-1">
+                    <a href="{% url 'articles:comment_edit' comment.pk %}"
+                       class="btn btn-sm btn-outline-warning"
+                       title="Редагувати">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+                      </svg>
+                    </a>
+                    <form action="{% url 'articles:comment_delete' comment.pk %}" method="post" class="d-inline">
+                      {% csrf_token %}
+                      <button type="submit"
+                              class="btn btn-sm btn-outline-danger"
+                              title="Видалити"
+                              onclick="return confirm('Видалити коментар назавжди?')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                          <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z"/>
+                          <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1ZM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118ZM2.5 3h11V2h-11v1Z"/>
+                        </svg>
+                      </button>
+                    </form>
+                  </div>
+                {% endif %}
+              </div>
+
+              <p class="mb-0 text-light" style="white-space: pre-line; line-height: 1.6;">
+                {{ comment.content }}
+              </p>
+            </div>
           </div>
-        {% endif %}
+        </div>
       </div>
     {% endfor %}
   {% else %}
-    <p>Коментарів поки немає.</p>
+    <div class="text-center py-5">
+      <p class="text-muted fs-5">
+        Коментарів поки немає.<br>
+        <small>Будьте першим, хто залишить відгук!</small>
+      </p>
+    </div>
   {% endif %}
 
-  <hr>
-
+  <!-- === ФОРМА ДОДАВАННЯ КОМЕНТАРЮ === -->
   {% if user.is_authenticated %}
-    <h3>Додати коментар:</h3>
-    <form method="post">
-      {% csrf_token %}
-      {{ comment_form.as_p }}
-      <button type="submit" class="btn btn-success">Надіслати</button>
-    </form>
+    <div class="mt-5 p-4 rounded-4 shadow-sm" style="background:#1a1a1a; border: 2px solid #ff6a00;">
+      <h4 class="text-orange mb-3 text-center">
+        Залишити коментар
+      </h4>
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+          <textarea name="content"
+                    class="form-control bg-dark text-light border-orange"
+                    rows="4"
+                    placeholder="Напишіть свій коментар..."
+                    style="resize: none; border-radius: 12px;"
+                    required></textarea>
+        </div>
+        <div class="text-center">
+          <button type="submit" class="btn btn-success btn-lg px-5 rounded-pill">
+            Надіслати
+          </button>
+        </div>
+      </form>
+    </div>
   {% else %}
-    <p>🔒 <a href="{% url 'accounts:login' %}" style="color:#ff6a00;">Увійдіть</a>, щоб залишити коментар.</p>
+    <div class="text-center py-5">
+      <a href="{% url 'accounts:login' %}" class="btn btn-outline-orange btn-lg px-5 rounded-pill">
+        Увійти, щоб коментувати
+      </a>
+    </div>
   {% endif %}
-
 </div>
 {% endblock %}

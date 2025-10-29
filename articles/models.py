@@ -25,6 +25,28 @@ class Article(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    CONTENT_TYPE_CHOICES = [
+        ('none', 'Без мультимедіа'),
+        ('image', 'Фото'),
+        ('video', 'Відео (YouTube/Vimeo)'),
+    ]
+
+    content_type = models.CharField(
+        max_length=10,
+        choices=CONTENT_TYPE_CHOICES,
+        default='none',
+        verbose_name="Мультимедіа"
+    )
+    media_file = models.ImageField(
+        upload_to='articles_media/',
+        blank=True, null=True,
+        verbose_name="Фото"
+    )
+    media_url = models.URLField(
+        blank=True, null=True,
+        verbose_name="Відео (YouTube/Vimeo)"
+    )
+
     class Meta:
         ordering = ['-created_at']
 
@@ -34,15 +56,15 @@ class Article(models.Model):
 
 
     def save(self, *args, **kwargs):
-        if not self.slug:
-            base_slug = slugify(self.title)
-            slug = base_slug
-            n = 1
-            while Article.objects.filter(slug=slug).exists():
-                slug = f"{base_slug}-{n}"
-                n += 1
-            self.slug = slug
-        super().save(*args, **kwargs)
+            if not self.slug and self.title:
+                base_slug = slugify(self.title)
+                slug = base_slug
+                counter = 1
+                while Article.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                    slug = f"{base_slug}-{counter}"
+                    counter += 1
+                self.slug = slug
+            super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
